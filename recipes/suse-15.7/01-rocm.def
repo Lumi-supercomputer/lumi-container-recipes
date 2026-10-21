@@ -1,0 +1,5 @@
+Bootstrap: docker
+From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b3c00d83663d331707c6b2e40770739d31
+
+%post
+    set -euxo pipefail
