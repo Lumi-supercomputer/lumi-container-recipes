@@ -3,3 +3,41 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
 
 %post
     set -euxo pipefail
+
+    # Versions
+    OPENSUSE_SP=15.7
+    ROCM_SLES_VER=sles15
+
+    # Repositories
+    CLUSTER_REPO=https://download.opensuse.org/repositories/network:cluster/$OPENSUSE_SP
+    ROCM_REPO=https://repo.amd.com/rocm/packages-multi-arch/$ROCM_SLES_VER/x86_64
+
+    # Signing keys
+    CLUSTER_KEY_URL=$CLUSTER_REPO/repodata/repomd.xml.key
+    CLUSTER_KEY_SHA256=d546e147623ed42fd2c22f0791e97819d5d65c35bdce92d69f0218ebbaf98984
+
+    AMD_KEY_URL=https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg
+    AMD_KEY_SHA256=090a4bf906822c5eb450ae8024b728b9281f2fccb0304641eb75018e4ec6a6dd
+
+    # Dependencies
+    zypper --non-interactive install wget cmake
+
+    # Fetch, check, and import signing keys
+    fetch_check_import() {
+        wget --output-document="$2" "$1"
+        echo "$3  $2" | sha256sum --check --strict
+        rpm --import "$2"
+    }
+    fetch_check_import "$CLUSTER_KEY_URL" cluster.key "$CLUSTER_KEY_SHA256"
+    fetch_check_import "$AMD_KEY_URL" amd.key "$AMD_KEY_SHA256"
+
+    # Add repositories
+    zypper --non-interactive addrepo --gpgcheck-strict $CLUSTER_REPO network-cluster
+    zypper --non-interactive addrepo --gpgcheck-strict $ROCM_REPO rocm
+    zypper --non-interactive refresh
+
+    # Install ROCm
+    # zypper --non-interactive install hwloc hwloc-devel amdrocm-core-devel7.14-gfx90a
+
+    # Clean
+    zypper clean --all
