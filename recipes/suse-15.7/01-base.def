@@ -38,6 +38,10 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
 
     # Dependencies
     zypper --non-interactive install \
+        gcc \
+        gcc-c++ \
+        gcc-fortran \
+        make \
         cmake \
         hwloc \
         hwloc-devel \

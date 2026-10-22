@@ -1,8 +1,33 @@
 Bootstrap: localimage
 From: {{ BASE_IMAGE }} # Builder must pass the base image with, e.g., `singularity build --build-arg BASE_IMAGE="$SINGULARITY_IMAGES/my-base-image.sif"`
 
+%files
+    {{ CXI_HEADERDIR }}/usr /
+
 %post
     set -euxo pipefail
+
+    # Directories
+    # INSTALL_PREFIX=/usr/local
+
+    # Versions
+    CXI_RELEASE=12.0.2
+    LIBFABRIC_RELEASE=2.7.0
+    MPICH_RELEASE=5.0.2
+    AWS_OFI_NCCL_RELEASE=1.22.0
+
+    # Tarballs
+    LIBCXI_URL=https://github.com/HewlettPackard/shs-libcxi/archive/refs/tags/release/shs-$CXI_RELEASE.tar.gz
+    LIBFABRIC_URL=https://github.com/ofiwg/libfabric/releases/download/v$LIBFABRIC_RELEASE/libfabric-$LIBFABRIC_RELEASE.tar.bz2
+    MPICH_URL=https://www.mpich.org/static/downloads/$MPICH_RELEASE/mpich-$MPICH_RELEASE.tar.gz
+    AWS_OFI_NCCL_URL=https://github.com/aws/aws-ofi-nccl/releases/download/v$AWS_OFI_NCCL_RELEASE/aws-ofi-nccl-$AWS_OFI_NCCL_RELEASE.tar.gz
+
+    # Tarball hashes
+    LIBCXI_SHA256=339d3e88671c1283cb4da214a86ad80ff3a8ac39a43912e63486fb8dab44b08e
+    LIBFABRIC_SHA256=366000427e194d4ce22e272519b608afbebb1fc9915bcf5da924157a8a47fe10
+    MPICH_SHA256=928c2f18d350a91443fe8024ad01ce2c6009e9c551e0a73e797fc567f119137d
+    AWS_OFI_NCCL_SHA256=c791bd33b73c089bd37e314c8e7c551a5247e3feee53f077e0835daf730db09a
+
 
     # Fetch package, check sha256sum, and extract
     # fetch_check_extract URL TO_FILE SHASUM
@@ -11,3 +36,40 @@ From: {{ BASE_IMAGE }} # Builder must pass the base image with, e.g., `singulari
         echo "$3  $2" | sha256sum --check --strict
         tar --extract --file="$2"
     }
+
+    ## libcxi
+    fetch_check_extract "$LIBCXI_URL" libcxi.tar.gz "$LIBCXI_SHA256"
+    # cd shs-libcxi-release-shs-$CXI_RELEASE
+    # ./autogen.sh
+    # ./configure \
+    #     --with-rocm
+    # make --jobs=$(nproc) install
+
+    ## libfabric
+    fetch_check_extract "$LIBFABRIC_URL" libfabric.tar.bz2 "$LIBFABRIC_SHA256"
+    # cd libfabric-$LIBFABRIC_RELEASE
+    # ./configure \
+    #     --enable-cxi \
+    #     --with-rocr \
+    #     --with-kdreg2
+    # make --jobs=$(nproc) install
+
+    ## MPICH
+    fetch_check_extract "$MPICH_URL" mpich.tar.gz "$MPICH_SHA256"
+    # cd mpich-$MPICH_RELEASE
+    # ./configure \
+    #     --with-device=ch4:ofi \
+    #     --with-libfabric \
+    #     --with-hip-includes \
+    #     --with-hip-lib \
+    #     --with-hwloc
+    # make --jobs=$(nproc) install
+
+    ## aws-ofi-nccl
+    fetch_check_extract "$AWS_OFI_NCCL_URL" aws-ofi-nccl.tar.gz "$AWS_OFI_NCCL_SHA256"
+    # cd aws-ofi-nccl-$AWS_OFI_NCCL_RELEASE
+    # ./configure \
+    #     --with-libfabric \
+    #     --with-rocm \
+    #     --with-mpi
+    # make --jobs=$(nproc) install
