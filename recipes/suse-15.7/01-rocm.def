@@ -41,3 +41,7 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
 
     # Clean
     zypper clean --all
+
+%environment
+    export ROCM_PATH=/opt/rocm
+    export LD_LIBRARY_PATH=${ROCM_PATH}/lib:${LD_LIBRARY_PATH}
