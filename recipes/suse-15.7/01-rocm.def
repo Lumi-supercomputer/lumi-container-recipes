@@ -1,6 +1,9 @@
 Bootstrap: docker
 From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b3c00d83663d331707c6b2e40770739d31
 
+%arguments
+    RECIPE_COMMIT_HASH=unset
+   
 %post
     set -euxo pipefail
 
@@ -37,7 +40,7 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
     zypper --non-interactive refresh
 
     # Install ROCm
-    # zypper --non-interactive install hwloc hwloc-devel amdrocm-core-devel7.14-gfx90a
+    zypper --non-interactive install hwloc hwloc-devel amdrocm-core-devel7.14-gfx90a
 
     # Clean
     zypper clean --all
@@ -45,3 +48,6 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
 %environment
     export ROCM_PATH=/opt/rocm
     export LD_LIBRARY_PATH=${ROCM_PATH}/lib:${LD_LIBRARY_PATH}
+
+%labels
+   eu.lumi-supercomputer.image.recipe_hash {{ RECIPE_COMMIT_HASH }}
