@@ -1,5 +1,6 @@
 Bootstrap: docker
-From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b3c00d83663d331707c6b2e40770739d31
+# From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b3c00d83663d331707c6b2e40770739d31
+From: registry.suse.com/bci/gcc:15@sha256:1997398d083d39594ec668bb2ee1d7593a5483baf10ac78602985d6fe86cf671
 
 %arguments
     RECIPE_COMMIT_HASH=unset
@@ -43,10 +44,6 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
 
     # Dependencies
     zypper --non-interactive install \
-        gcc \
-        gcc-c++ \
-        gcc-fortran \
-        make \
         cmake \
         hwloc \
         hwloc-devel \
