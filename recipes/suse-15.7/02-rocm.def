@@ -1,8 +1,0 @@
-Bootstrap: localimage
-From: {{ BASE_IMAGE }} # Builder must pass the base image with, e.g., `singularity build --build-arg BASE_IMAGE="$SINGULARITY_IMAGES/my-base-image.sif"`
-
-%post
-    set -euxo pipefail
-
-    # Install ROCm
-    zypper --non-interactive install amdrocm-core-devel7.14-gfx90a-7.14.1-0

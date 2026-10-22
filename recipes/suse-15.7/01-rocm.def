@@ -1,12 +1,17 @@
 Bootstrap: docker
 From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b3c00d83663d331707c6b2e40770739d31
 
+%arguments
+    RECIPE_COMMIT_HASH=unset
+
 %post
     set -euxo pipefail
 
     # Versions
     OPENSUSE_SP=15.7
     ROCM_SLES_VER=sles15
+    ROCM_RELEASE=7.14
+    ROCM_ARCH=gfx90a
 
     # Repositories
     CLUSTER_REPO=https://download.opensuse.org/repositories/network:cluster/$OPENSUSE_SP
@@ -60,3 +65,16 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
         libsensors4-devel \
         libnuma-devel \
         python3
+
+    # Install ROCm
+    zypper --non-interactive install amdrocm-core-devel$ROCM_RELEASE-$ROCM_ARCH
+
+    # Clean
+    zypper clean --all
+
+%environment
+    export ROCM_PATH=/opt/rocm
+    export LD_LIBRARY_PATH=${ROCM_PATH}/lib:${LD_LIBRARY_PATH}
+
+%labels
+   eu.lumi-supercomputer.image.recipe_hash {{ RECIPE_COMMIT_HASH }}
