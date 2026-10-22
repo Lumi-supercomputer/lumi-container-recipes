@@ -19,8 +19,8 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
     AMD_KEY_URL=https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg
     AMD_KEY_SHA256=090a4bf906822c5eb450ae8024b728b9281f2fccb0304641eb75018e4ec6a6dd
 
-    # Dependencies
-    zypper --non-interactive install wget cmake
+    # Dependencies for fetching keys
+    zypper --non-interactive install wget
 
     # Fetch, check, and import signing keys
     fetch_check_import() {
@@ -36,8 +36,23 @@ From: registry.suse.com/bci/bci-base:15.7@sha256:7a988cafacf98c38dc43b93d0035c8b
     zypper --non-interactive addrepo --gpgcheck-strict $ROCM_REPO rocm
     zypper --non-interactive refresh
 
-    # Install ROCm
-    # zypper --non-interactive install hwloc hwloc-devel amdrocm-core-devel7.14-gfx90a
-
-    # Clean
-    zypper clean --all
+    # Dependencies
+    zypper --non-interactive install \
+        cmake \
+        hwloc \
+        hwloc-devel \
+        bzip2 \
+        autoconf \
+        automake \
+        libtool \
+        pkg-config \
+        libjson-c-devel \
+        libnl3-devel \
+        libcurl-devel \
+        libconfig-devel \
+        libuv-devel \
+        fuse-devel \
+        libyaml-devel \
+        libsensors4-devel \
+        libnuma-devel \
+        python3
