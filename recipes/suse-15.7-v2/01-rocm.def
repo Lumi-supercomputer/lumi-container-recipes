@@ -1,0 +1,57 @@
+Bootstrap: docker
+From: {{ SUSE_BASE_IMAGE }}
+
+%post
+    set -euxo pipefail
+
+    # Dependencies for fetching keys
+    zypper --non-interactive install wget
+
+    # Fetch, check, and import signing keys
+    fetch_check_import() {
+        wget --output-document="$2" "$1"
+        echo "$3  $2" | sha256sum --check --strict
+        rpm --import "$2"
+    }
+    fetch_check_import {{ CLUSTER_KEY_URL }} cluster.key {{ CLUSTER_KEY_SHA256 }}
+    fetch_check_import {{ AMD_KEY_URL }} amd.key {{ AMD_KEY_SHA256 }}
+
+    # Add repositories
+    zypper --non-interactive addrepo --gpgcheck-strict {{ CLUSTER_REPO }} network-cluster
+    zypper --non-interactive addrepo --gpgcheck-strict {{ ROCM_REPO }} rocm
+    zypper --non-interactive refresh
+
+    # Dependencies
+    zypper --non-interactive install \
+        cmake \
+        hwloc \
+        hwloc-devel \
+        bzip2 \
+        autoconf \
+        automake \
+        libtool \
+        pkg-config \
+        libjson-c-devel \
+        libnl3-devel \
+        libcurl-devel \
+        libconfig-devel \
+        libuv-devel \
+        fuse-devel \
+        libyaml-devel \
+        libsensors4-devel \
+        libnuma-devel \
+        python3
+
+    # Install ROCm
+    zypper --non-interactive install {{ ROCM_PACKAGE }}
+
+    # Clean
+    zypper clean --all
+
+%environment
+    export ROCM_PATH={{ ROCM_PATH }}
+    export PATH={{ ROCM_CORE_PATH }}/bin:${PATH}
+    export LD_LIBRARY_PATH={{ ROCM_CORE_PATH }}/lib:${LD_LIBRARY_PATH}
+
+%labels
+   eu.lumi-supercomputer.image.recipe_hash {{ RECIPE_HASH }}

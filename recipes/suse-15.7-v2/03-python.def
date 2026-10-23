@@ -1,0 +1,27 @@
+Bootstrap: localimage
+From: {{ BASE_IMAGE }}
+
+%post
+    set -euxo pipefail
+
+    # Python and the packaging tools
+    zypper --non-interactive install \
+        {{ PYTHON_PACKAGE_PREFIX }} \
+        {{ PYTHON_PACKAGE_PREFIX }}-devel \
+        {{ PYTHON_PACKAGE_PREFIX }}-pip \
+        {{ PYTHON_PACKAGE_PREFIX }}-packaging \
+        {{ PYTHON_PACKAGE_PREFIX }}-wheel \
+        {{ PYTHON_PACKAGE_PREFIX }}-setuptools
+
+    # Clean
+    zypper clean --all
+
+    # Virtual environment that also sees the packages installed above
+    {{ PYTHON }} -m venv --system-site-packages {{ VENV_PATH }}
+
+%environment
+    export VIRTUAL_ENV={{ VENV_PATH }}
+    export PATH={{ VENV_PATH }}/bin:${PATH}
+
+%labels
+   eu.lumi-supercomputer.image.recipe_hash {{ RECIPE_HASH }}

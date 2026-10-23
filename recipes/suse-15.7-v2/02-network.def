@@ -1,0 +1,112 @@
+Bootstrap: localimage
+From: {{ BASE_IMAGE }} # Builder must pass the base image with, e.g., `singularity build --build-arg BASE_IMAGE="$SINGULARITY_IMAGES/my-base-image.sif"`
+
+%post
+    set -euxo pipefail
+
+    # Compilers
+    export CC={{ CC }}
+    export CXX={{ CXX }}
+    export FC={{ FC }}
+    export F77={{ F77 }}
+
+    # Libraries needed by configure tests and builds
+    export LD_LIBRARY_PATH={{ ROCM_CORE_PATH }}/lib:{{ LIBCXI_PATH }}/lib:{{ LIBFABRIC_PATH }}/lib:{{ MPICH_PATH }}/lib
+
+    # Fetch package, check sha256sum, and extract into directory $4
+    fetch_check_extract() {
+        wget --output-document="$2" "$1"
+        echo "$3  $2" | sha256sum --check --strict
+        mkdir "$4"
+        tar --extract --file="$2" --directory="$4" --strip-components=1
+    }
+
+    # Build directory
+    BUILD_DIR=/tmp-build # Workaround to avoid using /tmp shared with host by default
+    mkdir "$BUILD_DIR"
+
+    # CXI header directory
+    mkdir -p {{ LIBCXI_PATH }}/include
+
+    # CXI driver
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ CXI_DRIVER_URL }} shs-cxi-driver.tar.gz {{ CXI_DRIVER_SHA256 }} cxi-driver
+    cp -r cxi-driver/include/* {{ LIBCXI_PATH }}/include
+
+    # Cassini
+    cd "$BUILD_DIR"
+    # The libcxi build below expects the Cassini headers in ../cassini-headers/install relative to its source directory
+    mkdir cassini-headers
+    fetch_check_extract {{ CASSINI_URL }} shs-cassini.tar.gz {{ CASSINI_SHA256 }} cassini-headers/install
+    cp -r cassini-headers/install/include/* {{ LIBCXI_PATH }}/include
+
+    # KDREG2
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ KDREG2_URL }} shs-kdreg2.tar.gz {{ KDREG2_SHA256 }} kdreg2
+
+    ## libcxi
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ LIBCXI_URL }} libcxi.tar.gz {{ LIBCXI_SHA256 }} libcxi
+    cd libcxi
+    # ./autogen.sh
+    # ./configure \
+    #     CPPFLAGS="-I{{ ROCM_PATH }}/include -D __HIP_PLATFORM_HCC__ -D __HIP_PLATFORM_AMD__ -D HAVE_HIP_SUPPORT" \
+    #     CFLAGS="-I{{ LIBCXI_PATH }}/include" \
+    #     --prefix={{ LIBCXI_PATH }} \
+    #     --with-rocm={{ ROCM_PATH }} \
+    #     --with-systemdsystemunitdir={{ LIBCXI_PATH }}/lib/systemd \
+    #     --with-udevrulesdir={{ LIBCXI_PATH }}/lib/udev
+    # make --jobs=$(nproc) install
+
+    ## libfabric
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ LIBFABRIC_URL }} libfabric.tar.bz2 {{ LIBFABRIC_SHA256 }} libfabric
+    cd libfabric
+    # ./configure \
+    #     CFLAGS="-g -O -Wno-error=maybe-uninitialized" \
+    #     CPPFLAGS="-I{{ LIBCXI_PATH }}/include -I{{ ROCM_PATH }}/include" \
+    #     LDFLAGS="-L{{ ROCM_CORE_PATH }}/lib" \
+    #     PKG_CONFIG_PATH={{ LIBCXI_PATH }}/lib/pkgconfig \
+    #     --prefix={{ LIBFABRIC_PATH }} \
+    #     --enable-cxi={{ LIBCXI_PATH }} \
+    #     --with-rocr={{ ROCM_CORE_PATH }} \
+    #     --with-kdreg2="$BUILD_DIR"/kdreg2/include \
+    #     --with-default-monitor=kdreg2 \
+    #     --disable-sockets --disable-udp --disable-verbs --disable-rxm --disable-mrail --disable-rxd --disable-tcp \
+    #     --disable-usnic --disable-efa --disable-psm2 --disable-psm3 --disable-opx --disable-lnx
+    # make --jobs=$(nproc) install
+
+    ## MPICH
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ MPICH_URL }} mpich.tar.gz {{ MPICH_SHA256 }} mpich
+    cd mpich
+    # ./configure \
+    #     --prefix={{ MPICH_PATH }} \
+    #     --with-device=ch4:ofi \
+    #     --with-libfabric={{ LIBFABRIC_PATH }} \
+    #     --with-hip-include={{ ROCM_PATH }}/include \
+    #     --with-hip-lib={{ ROCM_CORE_PATH }}/lib \
+    #     --with-hwloc=/usr
+    # make --jobs=$(nproc) install
+
+    ## aws-ofi-nccl
+    cd "$BUILD_DIR"
+    fetch_check_extract {{ AWS_OFI_NCCL_URL }} aws-ofi-nccl.tar.gz {{ AWS_OFI_NCCL_SHA256 }} aws-ofi-nccl
+    cd aws-ofi-nccl
+    # ./configure \
+    #     --prefix={{ AWS_OFI_NCCL_PATH }} \
+    #     --with-libfabric={{ LIBFABRIC_PATH }} \
+    #     --with-rocm={{ ROCM_CORE_PATH }} \
+    #     --with-mpi={{ MPICH_PATH }}
+    # make --jobs=$(nproc) install
+
+    # Clean the build directory
+    rm -rf "$BUILD_DIR"
+
+%environment
+    export PATH={{ MPICH_PATH }}/bin:{{ LIBFABRIC_PATH }}/bin:${PATH}
+    export LD_LIBRARY_PATH={{ AWS_OFI_NCCL_PATH }}/lib:{{ MPICH_PATH }}/lib:{{ LIBFABRIC_PATH }}/lib:{{ LIBCXI_PATH }}/lib:{{ ROCM_CORE_PATH }}/lib:${LD_LIBRARY_PATH}
+    export PKG_CONFIG_PATH={{ MPICH_PATH }}/lib/pkgconfig:{{ LIBFABRIC_PATH }}/lib/pkgconfig:${PKG_CONFIG_PATH}
+
+%labels
+   eu.lumi-supercomputer.image.recipe_hash {{ RECIPE_HASH }}
