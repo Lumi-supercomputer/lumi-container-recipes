@@ -5,7 +5,6 @@ CUSER=user
 CUID=1001
 CGID=1001
 MEMORY=16g # Memory limit. --memory-swap is memory plus swap, so setting it equal to MEMORY disables swap.
-SCRIPTDIR=$(realpath "$(dirname "$0")")
 CONTAINER_NAME=$(basename $(realpath "$(dirname "$0")"))
 
 podman run --rm -it \
@@ -14,7 +13,6 @@ podman run --rm -it \
     --tmpfs /home/"$CUSER":rw,mode=1777,size=1g \
     --env HOME=/home/"$CUSER" \
     --workdir /home/"$CUSER" \
-    --systemd=false \
     --security-opt=no-new-privileges \
     --read-only \
     --network=none \
