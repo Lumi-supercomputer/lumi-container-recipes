@@ -9,3 +9,20 @@ rsync --partial --progress podman-suse-15.7.tar lumi:<SINGULARITY_IMAGEDIR>/
 # LUMI
 singularity build "$SINGULARITY_IMAGEDIR"/podman-suse-15.7.sif oci-archive://"$SINGULARITY_IMAGEDIR"/podman-suse-15.7.tar
 ```
+
+## Version and linker checks
+
+```bash
+mpichversion
+ldd /opt/mpich/lib/libmpi.so | grep --extended-regexp 'fabric|hsa'
+
+ldd /opt/libfabric/lib/libfabric.so | grep --extended-regexp 'cxi|hsa'
+fi_info
+fi_info --version
+fi_info --list
+fi_info --provider=cxi
+
+ldd /opt/aws-ofi-nccl/lib/librccl-net*.so | grep --extended-regexp 'fabric'
+
+ldconfig --print-cache | grep rccl
+```
