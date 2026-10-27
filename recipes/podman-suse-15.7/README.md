@@ -7,7 +7,9 @@
 rsync --partial --progress podman-suse-15.7.tar lumi:<SINGULARITY_IMAGEDIR>/
 
 # LUMI
-singularity build "$SINGULARITY_IMAGEDIR"/podman-suse-15.7.sif oci-archive://"$SINGULARITY_IMAGEDIR"/podman-suse-15.7.tar
+singularity build podman-suse-15.7.sif oci-archive://podman-suse-15.7.tar
+
+singularity shell podman-suse-15.7.sif
 ```
 
 ## Version and linker checks
