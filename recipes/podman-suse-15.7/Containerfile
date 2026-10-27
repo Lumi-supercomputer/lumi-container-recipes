@@ -80,7 +80,7 @@ ARG SHS_RELEASE=12.0.2
 ARG CXI_DRIVER_SHA256=9d10c8783b64844303651afa9f9500a9a86918827446d469797925340f9c7ec7
 RUN wget --output-document=shs-cxi-driver.tar.gz https://github.com/HewlettPackard/shs-cxi-driver/archive/refs/tags/release/shs-$SHS_RELEASE.tar.gz
 RUN echo "$CXI_DRIVER_SHA256  shs-cxi-driver.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=shs-cxi-driver.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=shs-cxi-driver.tar.gz --strip-components=1
 RUN mkdir -p /opt/libcxi/include
 RUN cp -r include/* /opt/libcxi/include
 
@@ -90,7 +90,7 @@ WORKDIR /tmp/build/cassini-headers/install
 ARG CASSINI_SHA256=478a7bed6eedae6ba7035e7a0fc5662689f3d6dcffce27533e0a4ae1d35727b2
 RUN wget --output-document=shs-cassini.tar.gz https://github.com/HewlettPackard/shs-cassini-headers/archive/refs/tags/release/shs-$SHS_RELEASE.tar.gz
 RUN echo "$CASSINI_SHA256  shs-cassini.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=shs-cassini.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=shs-cassini.tar.gz --strip-components=1
 RUN cp -r include/* /opt/libcxi/include
 
 ## libcxi
@@ -98,7 +98,7 @@ WORKDIR /tmp/build/libcxi
 ARG LIBCXI_SHA256=339d3e88671c1283cb4da214a86ad80ff3a8ac39a43912e63486fb8dab44b08e
 RUN wget --output-document=libcxi.tar.gz https://github.com/HewlettPackard/shs-libcxi/archive/refs/tags/release/shs-$SHS_RELEASE.tar.gz
 RUN echo "$LIBCXI_SHA256  libcxi.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=libcxi.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=libcxi.tar.gz --strip-components=1
 RUN ./autogen.sh
 RUN ./configure \
         CPPFLAGS="-I/opt/rocm/core-$ROCM_RELEASE/include -D __HIP_PLATFORM_HCC__ -D __HIP_PLATFORM_AMD__ -D HAVE_HIP_SUPPORT" \
@@ -115,7 +115,7 @@ WORKDIR /tmp/build/kdreg2
 ARG KDREG2_SHA256=d58b93e059e18dd96a4a5d7e99afbe650848cec954fdbbb1a031308246d0d212
 RUN wget --output-document=shs-kdreg2.tar.gz https://github.com/HewlettPackard/shs-kdreg2/archive/refs/tags/release/shs-$SHS_RELEASE.tar.gz
 RUN echo "$KDREG2_SHA256  shs-kdreg2.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=shs-kdreg2.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=shs-kdreg2.tar.gz --strip-components=1
 
 ## libfabric
 WORKDIR /tmp/build/libfabric
@@ -123,7 +123,7 @@ ARG LIBFABRIC_RELEASE=2.7.0
 ARG LIBFABRIC_SHA256=366000427e194d4ce22e272519b608afbebb1fc9915bcf5da924157a8a47fe10
 RUN wget --output-document=libfabric.tar.bz2 https://github.com/ofiwg/libfabric/releases/download/v$LIBFABRIC_RELEASE/libfabric-$LIBFABRIC_RELEASE.tar.bz2
 RUN echo "$LIBFABRIC_SHA256  libfabric.tar.bz2" | sha256sum --check --strict
-RUN tar --extract --file=libfabric.tar.bz2 --strip-components=1
+RUN tar --extract --no-same-owner --file=libfabric.tar.bz2 --strip-components=1
 RUN ./configure \
         CFLAGS="-g -O -Wno-error=maybe-uninitialized" \
         CPPFLAGS="-I/opt/libcxi/include -I/opt/rocm/core-$ROCM_RELEASE/include" \
@@ -145,8 +145,10 @@ ARG MPICH_RELEASE=5.0.2
 ARG MPICH_SHA256=928c2f18d350a91443fe8024ad01ce2c6009e9c551e0a73e797fc567f119137d
 RUN wget --output-document=mpich.tar.gz https://www.mpich.org/static/downloads/$MPICH_RELEASE/mpich-$MPICH_RELEASE.tar.gz
 RUN echo "$MPICH_SHA256  mpich.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=mpich.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=mpich.tar.gz --strip-components=1
+# The bundled yaksa uses ATOMIC_VAR_INIT, which C23 (the default of GCC 15) removed. MPICHLIB_CFLAGS stays out of the mpicc wrapper.
 RUN ./configure \
+        MPICHLIB_CFLAGS="-std=gnu17" \
         --prefix=/opt/mpich \
         --with-device=ch4:ofi \
         --with-libfabric=/opt/libfabric \
@@ -162,7 +164,7 @@ ARG AWS_OFI_NCCL_RELEASE=1.22.0
 ARG AWS_OFI_NCCL_SHA256=c791bd33b73c089bd37e314c8e7c551a5247e3feee53f077e0835daf730db09a
 RUN wget --output-document=aws-ofi-nccl.tar.gz https://github.com/aws/aws-ofi-nccl/releases/download/v$AWS_OFI_NCCL_RELEASE/aws-ofi-nccl-$AWS_OFI_NCCL_RELEASE.tar.gz
 RUN echo "$AWS_OFI_NCCL_SHA256  aws-ofi-nccl.tar.gz" | sha256sum --check --strict
-RUN tar --extract --file=aws-ofi-nccl.tar.gz --strip-components=1
+RUN tar --extract --no-same-owner --file=aws-ofi-nccl.tar.gz --strip-components=1
 RUN ./configure \
         --prefix=/opt/aws-ofi-nccl \
         --with-libfabric=/opt/libfabric \
