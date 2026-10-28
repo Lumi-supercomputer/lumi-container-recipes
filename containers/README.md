@@ -1,17 +1,18 @@
-# SUSE 15.7 image for LUMI
+# Podman Container for LUMI
 
 ```bash
 # Local
-./build.sh                                     # Builds podman-suse-15.7.tar in the current directory
-./run.sh                                       # Opens a shell in the image, in a sandbox
-rsync --partial --progress podman-suse-15.7.tar lumi:<SINGULARITY_IMAGEDIR>/
+./build.sh # Builds the image in the current directory
+./run.sh   # Runs the container in a sandbox
 
-# LUMI
-singularity build podman-suse-15.7.sif oci-archive://podman-suse-15.7.tar
+# Sync the image archive to remote
+rsync --partial --progress image.tar lumi:<SINGULARITY_IMAGEDIR>/
 
-singularity shell podman-suse-15.7.sif
+# On remote (LUMI)
+singularity build image.sif oci-archive://image.tar
 
-singularity exec podman-suse-15.7.sif <commands>
+singularity shell image.sif
+singularity exec image.sif <commands>
 ```
 
 ## Version and linker checks
