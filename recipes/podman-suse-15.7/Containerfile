@@ -197,6 +197,48 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=/opt/venv/bin:${PATH}
 
 #################################################################################
+# ROCm Validation Suite
+
+RUN zypper --non-interactive install libpci3 libnuma1
+
+WORKDIR /tmp/build/rvs
+ARG RVS_RELEASE=1.5.125-620
+ARG RVS_SHA256=8fb0c95d59ba1167758a8c4af8e2135b35a78ffab560dc3dffe2989ba57d7fba
+RUN wget --output-document=rvs.tar.gz https://repo.amd.com/rocm/rvs/tarball/amdrocm7-rvs-$RVS_RELEASE-Linux.tar.gz
+RUN echo "$RVS_SHA256  rvs.tar.gz" | sha256sum --check --strict
+WORKDIR /opt/rocm/extras-7
+RUN tar --extract --no-same-owner --file=/tmp/build/rvs/rvs.tar.gz
+RUN echo /opt/rocm/extras-7/lib > /etc/ld.so.conf.d/rvs.conf && ldconfig
+# RVS needs libomp.so from the ROCm LLVM
+RUN echo /opt/rocm/core-$ROCM_RELEASE/lib/llvm/lib > /etc/ld.so.conf.d/rocm-llvm.conf && ldconfig
+
+ENV PATH=/opt/rocm/extras-7/bin:${PATH}
+
+#################################################################################
+# OSU micro-benchmarks with ROCm and RCCL support
+
+WORKDIR /tmp/build/osu-micro-benchmarks
+ARG OSU_RELEASE=7.5.2
+ARG OSU_SHA256=618de3d0b1122f73a9229177d2da1e5cd62e431190580cb915f2605849cbbbdc
+RUN wget --output-document=osu-micro-benchmarks.tar.gz https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-$OSU_RELEASE.tar.gz
+RUN echo "$OSU_SHA256  osu-micro-benchmarks.tar.gz" | sha256sum --check --strict
+RUN tar --extract --no-same-owner --file=osu-micro-benchmarks.tar.gz --strip-components=1
+# The xccl benchmarks declare function pointers as f() and call them with arguments, which C23 (the default of GCC 15) rejects.
+RUN ./configure \
+        CC=/opt/mpich/bin/mpicc \
+        CXX=/opt/mpich/bin/mpicxx \
+        CFLAGS="-std=gnu17 -g -O2" \
+        CPPFLAGS="-D __HIP_PLATFORM_AMD__" \
+        --prefix=/opt/osu \
+        --enable-rocm \
+        --with-rocm=/opt/rocm/core-$ROCM_RELEASE \
+        --enable-rcclomb \
+        --with-rccl=/opt/rocm/core-$ROCM_RELEASE
+RUN make --jobs=$(nproc) install
+
+ENV PATH=/opt/osu/libexec/osu-micro-benchmarks/mpi/pt2pt:/opt/osu/libexec/osu-micro-benchmarks/mpi/one-sided:/opt/osu/libexec/osu-micro-benchmarks/mpi/collective:/opt/osu/libexec/osu-micro-benchmarks/xccl/pt2pt:/opt/osu/libexec/osu-micro-benchmarks/xccl/collective:${PATH}
+
+#################################################################################
 # Clean
 
 # Removes the files from the flattened SIF only. The earlier layers in the archive still contain them.
