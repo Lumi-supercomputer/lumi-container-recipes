@@ -105,7 +105,7 @@ RUN ./autogen.sh
 # GCC 16 also flags variables that are only incremented (count++) as set but not used, and libcxi builds with -Werror.
 RUN ./configure \
         CPPFLAGS="-I/opt/rocm/core-$ROCM_RELEASE/include -D __HIP_PLATFORM_HCC__ -D __HIP_PLATFORM_AMD__ -D HAVE_HIP_SUPPORT" \
-        CFLAGS="-I/opt/libcxi/include -Wno-error=unused-but-set-variable" \
+        CFLAGS="-I/opt/libcxi/include -Wno-error=unused-but-set-variable -Wno-error=address-of-packed-member -Wno-error=implicit-const-int-float-conversion" \
         --prefix=/opt/libcxi \
         --with-rocm=/opt/rocm/core-$ROCM_RELEASE \
         --with-systemdsystemunitdir=/opt/libcxi/lib/systemd \
@@ -158,6 +158,9 @@ RUN ./configure \
         --with-hip-include=/opt/rocm/core-$ROCM_RELEASE/include \
         --with-hip-lib=/opt/rocm/core-$ROCM_RELEASE/lib \
         --with-hwloc=/usr
+# libtool does not recognize flang and leaves its linker-flag prefix empty
+# Open PR (2026-11-02): https://github.com/pmodels/mpich/pull/7825
+RUN sed --in-place 's/^wl=""$/wl="-Wl,"/' libtool
 RUN make --jobs=$(nproc) install
 RUN echo /opt/mpich/lib > /etc/ld.so.conf.d/mpich.conf && ldconfig
 
