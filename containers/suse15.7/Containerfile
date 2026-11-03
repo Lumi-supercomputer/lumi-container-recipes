@@ -69,10 +69,10 @@ ENV PATH=/opt/rocm/core-${ROCM_RELEASE}/bin:${PATH}
 # Network stack
 
 # Compilers of the base image. Build arguments are visible as environment variables in RUN.
-ARG CC=gcc-15
-ARG CXX=g++-15
-ARG FC=gfortran-15
-ARG F77=gfortran-15
+ARG CC=amdclang # gcc-16
+ARG CXX=amdclang++ # g++-16
+ARG FC=amdflang # gfortran-16
+ARG F77=amdflang # gfortran-16
 
 ## CXI driver headers
 WORKDIR /tmp/build/cxi-driver
