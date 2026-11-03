@@ -14,11 +14,6 @@ podman build \
     --pull=newer \
     --label eu.lumi-supercomputer.image.recipe_hash="$RECIPE_HASH" \
     --tag "$CONTAINER_NAME" \
-    "$@" \
-    || {
-        echo "Build failed. Press <Enter> to continue"
-        read -r
-        exit 1
-    }
+    "$@"
 
-podman save --format oci-archive --output "$CONTAINER_NAME".tar "$CONTAINER_NAME"
+# podman save --format oci-archive --output "$CONTAINER_NAME".tar "$CONTAINER_NAME"
