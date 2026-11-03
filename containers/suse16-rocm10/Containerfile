@@ -128,7 +128,7 @@ RUN wget --output-document=libfabric.tar.bz2 https://github.com/ofiwg/libfabric/
 RUN echo "$LIBFABRIC_SHA256  libfabric.tar.bz2" | sha256sum --check --strict
 RUN tar --extract --no-same-owner --file=libfabric.tar.bz2 --strip-components=1
 RUN ./configure \
-        CFLAGS="-g -O -Wno-error=maybe-uninitialized" \
+        CFLAGS="-g -O" \
         CPPFLAGS="-I/opt/libcxi/include -I/opt/rocm/core-$ROCM_RELEASE/include" \
         LDFLAGS="-L/opt/rocm/core-$ROCM_RELEASE/lib" \
         PKG_CONFIG_PATH=/opt/libcxi/lib/pkgconfig \
